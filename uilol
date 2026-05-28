@@ -53,6 +53,7 @@ local Library = {
     SetFlags = { },
 
     ThemingStuff = { },
+    _Ready = false,
     ThemeMap = { },
 
     OpenFrames = { },
@@ -2823,6 +2824,13 @@ end)
 
             Items["Toggle"]:Connect("MouseButton1Down", function()
                 Toggle:Set(not Toggle.Value)
+                if Library._Ready and Library.Notify then
+                    Library:Notify({
+                        Title = Toggle.Name,
+                        Content = Toggle.Name .. (Toggle.Value and " Activated" or " Deactivated"),
+                        Time = 2
+                    })
+                end
             end)
 
             Toggle:Set(Toggle.Default)
