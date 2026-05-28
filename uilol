@@ -2487,8 +2487,10 @@ end)
 
                     Library.CurrentPage = Page
 
-                    Page.Window.Items.ContentTitle.Instance.Text = Page.Name
-                    Page.Window.Items.ContentDescription.Instance.Text = Page.Description
+                    if Page.Page.Active then
+                        Page.Window.Items.ContentTitle.Instance.Text = Page.Name
+                        Page.Window.Items.ContentDescription.Instance.Text = Page.Description
+                    end
                 else
                     Items["Inactive"]:Tween({BackgroundTransparency = 1})
                     
@@ -4276,12 +4278,12 @@ end
         local lowerContent = string.lower(content)
         local icon = "ℹ️"
         local accentColor = Library.Theme["Accent 3"]
-        if string.find(lowerContent, "activated") or string.find(lowerContent, "enabled") or string.find(lowerContent, "applied") or string.find(lowerContent, "set to") or string.find(lowerContent, "teleported") then
-            icon = "✅"
-            accentColor = Color3.fromRGB(80, 200, 120)
-        elseif string.find(lowerContent, "deactivated") or string.find(lowerContent, "disabled") or string.find(lowerContent, "reset") or string.find(lowerContent, "failed") or string.find(lowerContent, "not found") or string.find(lowerContent, "error") then
+        if string.find(lowerContent, "deactivated") or string.find(lowerContent, "disabled") or string.find(lowerContent, "reset") or string.find(lowerContent, "failed") or string.find(lowerContent, "not found") or string.find(lowerContent, "error") then
             icon = "❌"
             accentColor = Color3.fromRGB(220, 70, 70)
+        elseif string.find(lowerContent, "activated") or string.find(lowerContent, "enabled") or string.find(lowerContent, "applied") or string.find(lowerContent, "set to") or string.find(lowerContent, "teleported") then
+            icon = "✅"
+            accentColor = Color3.fromRGB(80, 200, 120)
         end
 
         local notif = Instance.new("Frame")
