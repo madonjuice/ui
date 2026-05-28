@@ -2956,6 +2956,10 @@ end)
                 Button:Press()
             end)
 
+            if Params.Tip or Params.tip then
+                Library:AddTooltip(Items["Button"], Params.Tip or Params.tip)
+            end
+
             return setmetatable(Button, Library)
         end
 
@@ -3272,6 +3276,10 @@ end)
 
             SetFlags[Slider.Flag] = function(Value)
                 Slider:Set(Value)
+            end
+
+            if Params.Tip or Params.tip then
+                Library:AddTooltip(Items["RealSlider"], Params.Tip or Params.tip)
             end
 
             return setmetatable(Slider, Library)
