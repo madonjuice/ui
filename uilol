@@ -4239,5 +4239,143 @@ end)
     end
 end
 
+    Library.Notify = function(Self, Data)
+        Data = Data or {}
+        local title = Data.Title or "Notification"
+        local content = Data.Content or ""
+        local duration = Data.Time or 3
+
+        if not Library._NotifHolder then
+            local holder = Instance.new("Frame")
+            holder.Name = "NotifHolder"
+            holder.BackgroundTransparency = 1
+            holder.AnchorPoint = Vector2.new(1, 0)
+            holder.Position = UDim2.new(1, -15, 0, 15)
+            holder.Size = UDim2.new(0, 300, 1, -30)
+            holder.BorderSizePixel = 0
+            holder.ZIndex = 100000
+            holder.Parent = Library.Holder.Instance
+
+            local layout = Instance.new("UIListLayout")
+            layout.SortOrder = Enum.SortOrder.LayoutOrder
+            layout.Padding = UDim.new(0, 8)
+            layout.VerticalAlignment = Enum.VerticalAlignment.Top
+            layout.Parent = holder
+
+            Library._NotifHolder = holder
+        end
+
+        local lowerContent = string.lower(content)
+        local icon = "ℹ️"
+        local accentColor = Library.Theme["Accent 3"]
+        if string.find(lowerContent, "activated") or string.find(lowerContent, "enabled") or string.find(lowerContent, "applied") or string.find(lowerContent, "set to") or string.find(lowerContent, "teleported") then
+            icon = "✅"
+            accentColor = Color3.fromRGB(80, 200, 120)
+        elseif string.find(lowerContent, "deactivated") or string.find(lowerContent, "disabled") or string.find(lowerContent, "reset") or string.find(lowerContent, "failed") or string.find(lowerContent, "not found") or string.find(lowerContent, "error") then
+            icon = "❌"
+            accentColor = Color3.fromRGB(220, 70, 70)
+        end
+
+        local notif = Instance.new("Frame")
+        notif.Name = "Notif"
+        notif.BackgroundColor3 = Color3.fromRGB(18, 20, 26)
+        notif.BackgroundTransparency = 0.02
+        notif.Size = UDim2.new(1, 0, 0, 52)
+        notif.BorderSizePixel = 0
+        notif.ZIndex = 100000
+        notif.ClipsDescendants = true
+        notif.Parent = Library._NotifHolder
+
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 8)
+        corner.Parent = notif
+
+        local accent = Instance.new("Frame")
+        accent.Name = "Accent"
+        accent.BackgroundColor3 = accentColor
+        accent.Size = UDim2.new(0, 3, 1, 0)
+        accent.BorderSizePixel = 0
+        accent.ZIndex = 100001
+        accent.Parent = notif
+
+        local iconLabel = Instance.new("TextLabel")
+        iconLabel.Name = "Icon"
+        iconLabel.Text = icon
+        iconLabel.Font = Enum.Font.GothamBold
+        iconLabel.TextSize = 18
+        iconLabel.BackgroundTransparency = 1
+        iconLabel.Size = UDim2.new(0, 30, 1, 0)
+        iconLabel.Position = UDim2.new(0, 10, 0, 0)
+        iconLabel.ZIndex = 100001
+        iconLabel.Parent = notif
+
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Name = "Title"
+        titleLabel.Text = title
+        titleLabel.Font = Enum.Font.GothamBold
+        titleLabel.TextSize = 13
+        titleLabel.TextColor3 = Color3.fromRGB(230, 230, 245)
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.Size = UDim2.new(1, -50, 0, 20)
+        titleLabel.Position = UDim2.new(0, 42, 0, 6)
+        titleLabel.ZIndex = 100001
+        titleLabel.Parent = notif
+
+        local contentLabel = Instance.new("TextLabel")
+        contentLabel.Name = "Content"
+        contentLabel.Text = content
+        contentLabel.Font = Enum.Font.Gotham
+        contentLabel.TextSize = 12
+        contentLabel.TextColor3 = Color3.fromRGB(160, 162, 180)
+        contentLabel.TextXAlignment = Enum.TextXAlignment.Left
+        contentLabel.TextTruncate = Enum.TextTruncate.AtEnd
+        contentLabel.BackgroundTransparency = 1
+        contentLabel.Size = UDim2.new(1, -50, 0, 16)
+        contentLabel.Position = UDim2.new(0, 42, 0, 28)
+        contentLabel.ZIndex = 100001
+        contentLabel.Parent = notif
+
+        local progress = Instance.new("Frame")
+        progress.Name = "Progress"
+        progress.BackgroundColor3 = accentColor
+        progress.BackgroundTransparency = 0.5
+        progress.AnchorPoint = Vector2.new(0, 1)
+        progress.Position = UDim2.new(0, 0, 1, 0)
+        progress.Size = UDim2.new(1, 0, 0, 2)
+        progress.BorderSizePixel = 0
+        progress.ZIndex = 100001
+        progress.Parent = notif
+
+        notif.BackgroundTransparency = 1
+        titleLabel.TextTransparency = 1
+        contentLabel.TextTransparency = 1
+        iconLabel.TextTransparency = 1
+        accent.BackgroundTransparency = 1
+
+        local fadeIn = TweenService:Create(notif, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {BackgroundTransparency = 0.02})
+        local titleIn = TweenService:Create(titleLabel, TweenInfo.new(0.3), {TextTransparency = 0})
+        local contentIn = TweenService:Create(contentLabel, TweenInfo.new(0.3), {TextTransparency = 0})
+        local iconIn = TweenService:Create(iconLabel, TweenInfo.new(0.3), {TextTransparency = 0})
+        local accentIn = TweenService:Create(accent, TweenInfo.new(0.3), {BackgroundTransparency = 0})
+        local progressTween = TweenService:Create(progress, TweenInfo.new(duration, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 0, 2)})
+
+        fadeIn:Play() titleIn:Play() contentIn:Play() iconIn:Play() accentIn:Play()
+        progressTween:Play()
+
+        task.delay(duration, function()
+            pcall(function()
+                local fadeOut = TweenService:Create(notif, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {BackgroundTransparency = 1})
+                local titleOut = TweenService:Create(titleLabel, TweenInfo.new(0.4), {TextTransparency = 1})
+                local contentOut = TweenService:Create(contentLabel, TweenInfo.new(0.4), {TextTransparency = 1})
+                local iconOut = TweenService:Create(iconLabel, TweenInfo.new(0.4), {TextTransparency = 1})
+                local accentOut = TweenService:Create(accent, TweenInfo.new(0.4), {BackgroundTransparency = 1})
+                fadeOut:Play() titleOut:Play() contentOut:Play() iconOut:Play() accentOut:Play()
+                fadeOut.Completed:Wait()
+                notif:Destroy()
+            end)
+        end)
+    end
+
 getgenv().Library = Library
 return Library
