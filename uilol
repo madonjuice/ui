@@ -778,6 +778,47 @@ local Library = {
         Library:Connect(Object.MouseLeave, OnHoverLeave)
     end
     
+    Library._Tooltip = nil
+    Library.AddTooltip = function(Self, Item, Text)
+        if not Text or Text == "" then return end
+        local Object = Item.Instance
+        if not Object then return end
+        Library:Connect(Object.MouseEnter, function()
+            if Library._Tooltip then pcall(function() Library._Tooltip:Destroy() end) end
+            local tip = Instance.new("TextLabel")
+            tip.Name = "Tooltip"
+            tip.Font = Enum.Font.Gotham
+            tip.TextSize = 11
+            tip.Text = Text
+            tip.TextColor3 = Color3.fromRGB(200, 200, 215)
+            tip.BackgroundColor3 = Color3.fromRGB(22, 24, 30)
+            tip.BackgroundTransparency = 0.05
+            tip.TextWrapped = true
+            tip.AutomaticSize = Enum.AutomaticSize.Y
+            tip.Size = UDim2.new(0, 200, 0, 0)
+            tip.BorderSizePixel = 0
+            tip.ZIndex = 100002
+            tip.Parent = Library.Holder.Instance
+            local corner = Instance.new("UICorner", tip)
+            corner.CornerRadius = UDim.new(0, 6)
+            local pad = Instance.new("UIPadding", tip)
+            pad.PaddingTop = UDim.new(0, 6)
+            pad.PaddingBottom = UDim.new(0, 6)
+            pad.PaddingLeft = UDim.new(0, 8)
+            pad.PaddingRight = UDim.new(0, 8)
+            local pos = Object.AbsolutePosition
+            local sz = Object.AbsoluteSize
+            tip.Position = UDim2.new(0, pos.X + sz.X + 5, 0, pos.Y)
+            Library._Tooltip = tip
+        end)
+        Library:Connect(Object.MouseLeave, function()
+            if Library._Tooltip then
+                pcall(function() Library._Tooltip:Destroy() end)
+                Library._Tooltip = nil
+            end
+        end)
+    end
+
     Library.GlobalUpdateOpenFrames = function(Self)
         for _, Item in Library.OpenFrames do
             local IsOpen = Item.IsOpen 
@@ -2817,6 +2858,10 @@ end)
             end)
 
             Toggle:Set(Toggle.Default)
+
+            if Params.Tip or Params.tip then
+                Library:AddTooltip(Items["Toggle"], Params.Tip or Params.tip)
+            end
 
             SetFlags[Toggle.Flag] = function(Value)
                 Toggle:Set(Value)
