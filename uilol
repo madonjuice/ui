@@ -1901,32 +1901,13 @@ Library:Create("UICorner", {
 
 Items["MinimizeButton"]:Connect("MouseButton1Down", function()
     Window:SetOpen(false)
-    -- Show notification
-    local notif = Instance.new("TextLabel")
-    notif.Name = "MinimizeNotif"
-    notif.Font = Enum.Font.GothamBold
-    notif.TextSize = 14
-    notif.Text = "UI Minimized. Press Right Shift to reopen."
-    notif.TextColor3 = Color3.fromRGB(200, 210, 255)
-    notif.BackgroundColor3 = Color3.fromRGB(20, 22, 28)
-    notif.BackgroundTransparency = 0.15
-    notif.Size = UDim2.new(0, 340, 0, 36)
-    notif.AnchorPoint = Vector2.new(0.5, 0)
-    notif.Position = UDim2.new(0.5, 0, 0, 20)
-    notif.BorderSizePixel = 0
-    notif.ZIndex = 100000
-    notif.Parent = Library.Holder.Instance
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = notif
-    task.delay(3, function()
-        pcall(function()
-            local tw = TweenService:Create(notif, TweenInfo.new(0.5), {TextTransparency = 1, BackgroundTransparency = 1})
-            tw:Play()
-            tw.Completed:Wait()
-            notif:Destroy()
-        end)
-    end)
+    if Library.Notify then
+        Library:Notify({
+            Title = "UI Minimized",
+            Content = "Press Right Shift to reopen.",
+            Time = 3
+        })
+    end
 end)
                 
                 Items["Pages"] = Library:Create("ScrollingFrame", {
