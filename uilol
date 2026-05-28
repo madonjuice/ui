@@ -3771,11 +3771,12 @@ end)
                     TextColor3 = Color3.fromRGB(199, 199, 212),
                     Text = Label.Name,
                     AnchorPoint = Vector2.new(0, 0.5),
-                    Size = UDim2.new(0, 0, 0, 15),
+                    Size = UDim2.new(1, 0, 0, 15),
                     BackgroundTransparency = 1,
                     Position = UDim2.new(0, 0, 0.5, 0),
                     BorderSizePixel = 0,
-                    AutomaticSize = Enum.AutomaticSize.X
+                    TextTruncate = Enum.TextTruncate.AtEnd,
+                    TextXAlignment = Enum.TextXAlignment.Left
                 })                
 
                 Label.Items = Items 
