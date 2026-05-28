@@ -157,10 +157,10 @@ local Library = {
 
     local Themes = {
         ["Preset"] = {
-            ["Accent"] = Color3.fromRGB(131, 48, 15),
-            ["Accent 2"] = Color3.fromRGB(74, 36, 23),
-            ["Accent 3"] = Color3.fromRGB(157, 53, 12),
-            ["Accent 4"] = Color3.fromRGB(225, 66, 6),
+            ["Accent"] = Color3.fromRGB(30, 100, 200),
+            ["Accent 2"] = Color3.fromRGB(20, 55, 130),
+            ["Accent 3"] = Color3.fromRGB(50, 140, 255),
+            ["Accent 4"] = Color3.fromRGB(70, 160, 255),
         }
     }
 
@@ -1711,7 +1711,7 @@ local Library = {
             local Window = {
                 Name = Params.Name or Params.name or "Window",
                 SubName = Params.SubName or Params.subname or "",
-                Logo = Params.Logo or Params.logo or "rbxassetid://114856413138528",
+                Logo = Params.Logo or Params.logo or "rbxassetid://115995485952001",
 
                 IsOpen = true,
                 Pages = { },
@@ -1847,14 +1847,70 @@ Items["SubTitle"] = Library:Create("TextLabel", {
     AutomaticSize = Enum.AutomaticSize.X,
     TextXAlignment = Enum.TextXAlignment.Left
 })
+
+-- Close button (X)
+Items["CloseButton"] = Library:Create("TextButton", {
+    Name = "\0",
+    FontFace = Library.Font,
+    TextSize = 16,
+    Parent = Items["Top"].Instance,
+    TextColor3 = Color3.fromRGB(180, 180, 190),
+    Text = "X",
+    AutoButtonColor = false,
+    AnchorPoint = Vector2.new(1, 0.5),
+    Position = UDim2.new(1, -12, 0.5, 0),
+    Size = UDim2.new(0, 24, 0, 24),
+    BorderSizePixel = 0,
+    BackgroundColor3 = Color3.fromRGB(35, 38, 48)
+})
+
+Library:Create("UICorner", {
+    Name = "\0",
+    Parent = Items["CloseButton"].Instance,
+    CornerRadius = UDim.new(0, 4)
+})
+
+Items["CloseButton"]:Connect("MouseButton1Down", function()
+    Library:Exit()
+end)
+
+-- Minimize button (-)
+Items["MinimizeButton"] = Library:Create("TextButton", {
+    Name = "\0",
+    FontFace = Library.Font,
+    TextSize = 18,
+    Parent = Items["Top"].Instance,
+    TextColor3 = Color3.fromRGB(180, 180, 190),
+    Text = "-",
+    AutoButtonColor = false,
+    AnchorPoint = Vector2.new(1, 0.5),
+    Position = UDim2.new(1, -42, 0.5, 0),
+    Size = UDim2.new(0, 24, 0, 24),
+    BorderSizePixel = 0,
+    BackgroundColor3 = Color3.fromRGB(35, 38, 48)
+})
+
+Library:Create("UICorner", {
+    Name = "\0",
+    Parent = Items["MinimizeButton"].Instance,
+    CornerRadius = UDim.new(0, 4)
+})
+
+Items["MinimizeButton"]:Connect("MouseButton1Down", function()
+    Window:SetOpen(not Window.IsOpen)
+end)
                 
-                Items["Pages"] = Library:Create("Frame", {
+                Items["Pages"] = Library:Create("ScrollingFrame", {
                     Name = "\0",
                     Parent = Items["Side"].Instance,
                     BackgroundTransparency = 1,
                     Position = UDim2.new(0, 0, 0, 70),
                     Size = UDim2.new(1, 0, 1, -70),
-                    BorderSizePixel = 0
+                    BorderSizePixel = 0,
+                    ScrollBarThickness = 2,
+                    ScrollBarImageTransparency = 0.5,
+                    CanvasSize = UDim2.new(0, 0, 0, 0),
+                    AutomaticCanvasSize = Enum.AutomaticSize.Y
                 })
                 
                 Library:Create("UIListLayout", {
@@ -2103,8 +2159,8 @@ Items["SubTitle"] = Library:Create("TextLabel", {
                 Library:Create("UIPadding", {
                     Name = "\0",
                     Parent = Items["Inactive"].Instance,
-                    PaddingBottom = UDim.new(0, 15),
-                    PaddingTop = UDim.new(0, 15)
+                    PaddingBottom = UDim.new(0, 8),
+                    PaddingTop = UDim.new(0, 8)
                 })
                 
                 Items["Icon"] = Library:Create("ImageLabel", {
