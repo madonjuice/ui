@@ -29,7 +29,7 @@ local IsMobile = UserInputService.TouchEnabled or false
 
 local Library = { 
     Flags = { },
-    MenuKeybind = tostring(Enum.KeyCode.X),
+    MenuKeybind = tostring(Enum.KeyCode.RightShift),
 
     Directory = "Avilon",
     Folders = {
@@ -1848,20 +1848,21 @@ Items["SubTitle"] = Library:Create("TextLabel", {
     TextXAlignment = Enum.TextXAlignment.Left
 })
 
--- Close button (X)
+-- Close button (X) - top right of main frame
 Items["CloseButton"] = Library:Create("TextButton", {
     Name = "\0",
     FontFace = Library.Font,
     TextSize = 16,
-    Parent = Items["Top"].Instance,
+    Parent = Items["MainFrame"].Instance,
     TextColor3 = Color3.fromRGB(180, 180, 190),
     Text = "X",
     AutoButtonColor = false,
-    AnchorPoint = Vector2.new(1, 0.5),
-    Position = UDim2.new(1, -12, 0.5, 0),
+    AnchorPoint = Vector2.new(1, 0),
+    Position = UDim2.new(1, -10, 0, 10),
     Size = UDim2.new(0, 24, 0, 24),
     BorderSizePixel = 0,
-    BackgroundColor3 = Color3.fromRGB(35, 38, 48)
+    BackgroundColor3 = Color3.fromRGB(35, 38, 48),
+    ZIndex = 10
 })
 
 Library:Create("UICorner", {
@@ -1874,20 +1875,21 @@ Items["CloseButton"]:Connect("MouseButton1Down", function()
     Library:Exit()
 end)
 
--- Minimize button (-)
+-- Minimize button (-) - next to close button
 Items["MinimizeButton"] = Library:Create("TextButton", {
     Name = "\0",
     FontFace = Library.Font,
     TextSize = 18,
-    Parent = Items["Top"].Instance,
+    Parent = Items["MainFrame"].Instance,
     TextColor3 = Color3.fromRGB(180, 180, 190),
     Text = "-",
     AutoButtonColor = false,
-    AnchorPoint = Vector2.new(1, 0.5),
-    Position = UDim2.new(1, -42, 0.5, 0),
+    AnchorPoint = Vector2.new(1, 0),
+    Position = UDim2.new(1, -40, 0, 10),
     Size = UDim2.new(0, 24, 0, 24),
     BorderSizePixel = 0,
-    BackgroundColor3 = Color3.fromRGB(35, 38, 48)
+    BackgroundColor3 = Color3.fromRGB(35, 38, 48),
+    ZIndex = 10
 })
 
 Library:Create("UICorner", {
@@ -1897,7 +1899,33 @@ Library:Create("UICorner", {
 })
 
 Items["MinimizeButton"]:Connect("MouseButton1Down", function()
-    Window:SetOpen(not Window.IsOpen)
+    Window:SetOpen(false)
+    -- Show notification
+    local notif = Instance.new("TextLabel")
+    notif.Name = "MinimizeNotif"
+    notif.Font = Enum.Font.GothamBold
+    notif.TextSize = 14
+    notif.Text = "UI Minimized. Press Right Shift to reopen."
+    notif.TextColor3 = Color3.fromRGB(200, 210, 255)
+    notif.BackgroundColor3 = Color3.fromRGB(20, 22, 28)
+    notif.BackgroundTransparency = 0.15
+    notif.Size = UDim2.new(0, 340, 0, 36)
+    notif.AnchorPoint = Vector2.new(0.5, 0)
+    notif.Position = UDim2.new(0.5, 0, 0, 20)
+    notif.BorderSizePixel = 0
+    notif.ZIndex = 100000
+    notif.Parent = Library.Holder.Instance
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = notif
+    task.delay(3, function()
+        pcall(function()
+            local tw = TweenService:Create(notif, TweenInfo.new(0.5), {TextTransparency = 1, BackgroundTransparency = 1})
+            tw:Play()
+            tw.Completed:Wait()
+            notif:Destroy()
+        end)
+    end)
 end)
                 
                 Items["Pages"] = Library:Create("ScrollingFrame", {
