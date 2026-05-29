@@ -29,7 +29,6 @@ local IsMobile = UserInputService.TouchEnabled or false
 
 local Library = {
     Flags = { },
-    Toggles = { },
     MenuKeybind = tostring(Enum.KeyCode.RightShift),
 
     Directory = "Avilon",
@@ -2132,11 +2131,18 @@ end)
                 Items["MainFrame"]:FadeDescendants(Bool, function()
                     Debounce = false
                     if Bool then
-                        task.wait(0.05)
-                        for Flag, ToggleInstance in Library.Toggles do
-                            local Value = Library.Flags[Flag]
-                            if ToggleInstance and type(Value) == "boolean" then
-                                pcall(function() ToggleInstance:Set(Value, true) end)
+                        for _, obj in Items["MainFrame"].Instance:GetDescendants() do
+                            if obj.Name == "Inline" and obj:IsA("Frame") then
+                                local parentToggle = obj:FindFirstAncestorOfClass("TextButton")
+                                if parentToggle then
+                                    local checkImage = parentToggle:FindFirstChild("CheckImage", true)
+                                    if checkImage then
+                                        local shouldBeVisible = obj.Size.X.Offset > 0
+                                        obj.BackgroundTransparency = shouldBeVisible and 0 or 1
+                                        obj.Size = shouldBeVisible and UDim2.new(1, 0, 1, 0) or UDim2.new(0, 0, 0, 0)
+                                        checkImage.ImageTransparency = shouldBeVisible and 0 or 1
+                                    end
+                                end
                             end
                         end
                     end
@@ -2861,7 +2867,7 @@ end)
                 Toggle.Items = Items
             end
 
-            function Toggle:Set(Bool, Silent)
+            function Toggle:Set(Bool)
                 Toggle.Value = Bool
 
                 if Bool then
@@ -2875,9 +2881,7 @@ end)
                 end
 
                 Flags[Toggle.Flag] = Bool
-                if not Silent then
-                    Library:SafeCall(Toggle.Callback, Bool)
-                end
+                Library:SafeCall(Toggle.Callback, Bool)
             end
 
             function Toggle:SetVisibility(Bool)
@@ -2917,8 +2921,6 @@ end)
             SetFlags[Toggle.Flag] = function(Value)
                 Toggle:Set(Value)
             end
-
-            Library.Toggles[Toggle.Flag] = Toggle
 
             return setmetatable(Toggle, Library)
         end
