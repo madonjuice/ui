@@ -317,6 +317,11 @@ local Library = {
             return { }
         end
 
+        -- Skip toggle visual indicators so their transparency isn't modified by FadeDescendants
+        if Object.Name == "Inline" or Object.Name == "CheckImage" then
+            return nil
+        end
+
         if Object:IsA("Frame") then
             return { "BackgroundTransparency" }
         elseif Object:IsA("TextLabel") or Object:IsA("TextButton") then
