@@ -27,8 +27,9 @@ local Mouse = cloneref(LocalPlayer:GetMouse())
 local IsMobile = UserInputService.TouchEnabled or false
 --#endregion
 
-local Library = { 
+local Library = {
     Flags = { },
+    Toggles = { },
     MenuKeybind = tostring(Enum.KeyCode.RightShift),
 
     Directory = "Avilon",
@@ -2121,18 +2122,27 @@ end)
             local Debounce = false
 
             function Window:SetOpen(Bool)
-                if Debounce then 
-                    return 
+                if Debounce then
+                    return
                 end
 
-                Debounce = true 
+                Debounce = true
 
                 Window.IsOpen = Bool
                 Items["MainFrame"]:FadeDescendants(Bool, function()
                     Debounce = false
+                    if Bool then
+                        task.wait(0.05)
+                        for Flag, ToggleInstance in Library.Toggles do
+                            local Value = Library.Flags[Flag]
+                            if ToggleInstance and type(Value) == "boolean" then
+                                pcall(function() ToggleInstance:Set(Value, true) end)
+                            end
+                        end
+                    end
                 end)
 
-                for Index, Value in Library.OpenFrames do 
+                for Index, Value in Library.OpenFrames do
                     Value:SetOpen(false)
                 end
 
@@ -2851,10 +2861,10 @@ end)
                 Toggle.Items = Items
             end
 
-            function Toggle:Set(Bool)
-                Toggle.Value = Bool 
+            function Toggle:Set(Bool, Silent)
+                Toggle.Value = Bool
 
-                if Bool then 
+                if Bool then
                     Items["Inline"]:Tween({BackgroundTransparency = 0, Size = UDim2.new(1, 0, 1, 0)})
                     Items["CheckImage"]:Tween({ImageTransparency = 0})
                     Items["Text"]:Tween({TextColor3 = Color3.fromRGB(199, 199, 212)})
@@ -2865,7 +2875,9 @@ end)
                 end
 
                 Flags[Toggle.Flag] = Bool
-                Library:SafeCall(Toggle.Callback, Bool)
+                if not Silent then
+                    Library:SafeCall(Toggle.Callback, Bool)
+                end
             end
 
             function Toggle:SetVisibility(Bool)
@@ -2905,6 +2917,8 @@ end)
             SetFlags[Toggle.Flag] = function(Value)
                 Toggle:Set(Value)
             end
+
+            Library.Toggles[Toggle.Flag] = Toggle
 
             return setmetatable(Toggle, Library)
         end
