@@ -58,6 +58,9 @@ local Library = {
 
     OpenFrames = { },
 
+    _TransparencyCache = { },
+    _ActiveTweens = { },
+
     Holder = nil,
     UnusedHolder = nil,
 
@@ -339,17 +342,43 @@ local Library = {
             return 
         end
 
-        local OldTransparency = Object[Property]
-        Object[Property] = Visibility and 1 or OldTransparency
+        -- Cache original transparency on first encounter
+        if not Library._TransparencyCache[Object] then
+            Library._TransparencyCache[Object] = {}
+        end
+        if Library._TransparencyCache[Object][Property] == nil then
+            Library._TransparencyCache[Object][Property] = Object[Property]
+        end
+        local OriginalTransparency = Library._TransparencyCache[Object][Property]
+
+        -- Cancel any active tween on this object+property to prevent race conditions
+        if Library._ActiveTweens[Object] and Library._ActiveTweens[Object][Property] then
+            Library._ActiveTweens[Object][Property]:Cancel()
+        end
+
+        -- For fade-in: start fully transparent then tween to original
+        -- For fade-out: tween from current value to fully transparent (no jump)
+        if Visibility then
+            Object[Property] = 1
+        end
 
         local NewTween = Library:Tween({
-            [Property] = Visibility and OldTransparency or 1
+            [Property] = Visibility and OriginalTransparency or 1
         }, nil, Object)
 
+        -- Track active tween
+        if not Library._ActiveTweens[Object] then
+            Library._ActiveTweens[Object] = {}
+        end
+        Library._ActiveTweens[Object][Property] = NewTween
+
         Library:Connect(NewTween.Completed, function()
+            if Library._ActiveTweens[Object] then
+                Library._ActiveTweens[Object][Property] = nil
+            end
             if not Visibility then 
                 task.wait()
-                Object[Property] = OldTransparency
+                Object[Property] = OriginalTransparency
             end
         end)
 
@@ -361,7 +390,7 @@ local Library = {
             Self.Instance.Visible = true 
         end
 
-        local NewTween 
+        local LastTween = nil
 
         local Children = Self.Instance:GetDescendants()
         table.insert(Children, Self.Instance)
@@ -375,20 +404,27 @@ local Library = {
 
             if type(TransparencyProperty) == "table" then
                 for _, Property in TransparencyProperty do
-                    NewTween = Library:Fade(Property, Visibility, Child)
+                    LastTween = Library:Fade(Property, Visibility, Child)
                 end
             else
-                NewTween = Library:Fade(TransparencyProperty, Visibility, Child)
+                LastTween = Library:Fade(TransparencyProperty, Visibility, Child)
             end
         end
 
-        Library:Connect(NewTween.Completed, function()
-            if Callback and type(Callback) == "function" then 
+        if LastTween then
+            Library:Connect(LastTween.Completed, function()
+                if Callback and type(Callback) == "function" then 
+                    Callback()
+                end
+
+                Self.Instance.Visible = Visibility
+            end)
+        else
+            if Callback and type(Callback) == "function" then
                 Callback()
             end
-
             Self.Instance.Visible = Visibility
-        end)
+        end
     end
 
     Library.MakeDraggable = function(Self)
@@ -639,7 +675,7 @@ local Library = {
 
     Library.Round = function(Self, Number, Float)
         local Multiplier = 1 / (Float or 1)
-        return math.floor(Number * Multiplier) / Multiplier
+        return math.round(Number * Multiplier) / Multiplier
     end
 
     Library.GetConfig = function(Self)
@@ -1827,36 +1863,8 @@ Library:Create("Frame", {
 
 -- Find this section in the Window function and replace the Icon and Title sections:
 
--- Replace the Icon section (moved further left):
-Items["Icon"] = Library:Create("ImageLabel", {
-    Name = "\0",
-    Parent = Items["Top"].Instance,
-    ImageColor3 = Library.Theme["Accent"],
-    Size = UDim2.new(0, 55, 0, 55),
-    AnchorPoint = Vector2.new(0, 0.5),
-    Image = Window.Logo,
-    BackgroundTransparency = 1,
-    Position = UDim2.new(0, 10, 0.5, 0),
-    ZIndex = 2,
-    BorderSizePixel = 0
-}):AddToTheme({ImageColor3 = 'Accent'})
 
-Items["Glow"] = Library:Create("ImageLabel", {
-    Name = "\0",
-    Parent = Items["Icon"].Instance,
-    ImageColor3 = Library.Theme["Accent"],
-    ScaleType = Enum.ScaleType.Slice,
-    ImageTransparency = 0.6000000238418579,
-    Size = UDim2.new(1, 20, 1, 20),
-    AnchorPoint = Vector2.new(0.5, 0.5),
-    Image = "http://www.roblox.com/asset/?id=18245826428",
-    BackgroundTransparency = 1,
-    Position = UDim2.new(0.5, 0, 0.5, 0),
-    BorderSizePixel = 0,
-    SliceCenter = Rect.new(Vector2.new(21, 21), Vector2.new(79, 79))
-}):AddToTheme({ImageColor3 = 'Accent'})
-
--- Replace Title (moved to be right next to the icon):
+-- Replace Title (moved to icon position):
 Items["Title"] = Library:Create("TextLabel", {
     Name = "\0",
     FontFace = Library.Font,
@@ -1867,7 +1875,7 @@ Items["Title"] = Library:Create("TextLabel", {
     AnchorPoint = Vector2.new(0, 0.5),
     Size = UDim2.new(0, 0, 0, 30),
     BackgroundTransparency = 1,
-    Position = UDim2.new(0, 65, 0.5, -8),  -- Changed from 80 to 65 (closer to icon)
+    Position = UDim2.new(0, 10, 0.5, 0),
     BorderSizePixel = 0,
     AutomaticSize = Enum.AutomaticSize.X,
     TextXAlignment = Enum.TextXAlignment.Left
@@ -1884,7 +1892,7 @@ Items["SubTitle"] = Library:Create("TextLabel", {
     AnchorPoint = Vector2.new(0, 0.5),
     Size = UDim2.new(0, 0, 0, 20),
     BackgroundTransparency = 1,
-    Position = UDim2.new(0, 67, 0.5, 12),  -- Changed from 82 to 67
+    Position = UDim2.new(0, 10, 0.5, 20),
     BorderSizePixel = 0,
     AutomaticSize = Enum.AutomaticSize.X,
     TextXAlignment = Enum.TextXAlignment.Left
@@ -2075,36 +2083,32 @@ end)
                     Items["OpenAndClose"] = Library:Create("TextButton", {
                         Name = "\0",
                         FontFace = Library.Font,
-                        TextSize = Library.FontSize,
+                        TextSize = 10,
                         Parent = Library.Holder.Instance,
-                        TextColor3 = Color3.fromRGB(0, 0, 0),
-                        Text = "",
+                        TextColor3 = Color3.fromRGB(255, 255, 255),
+                        Text = "AERO",
                         AutoButtonColor = false,
                         Position = UDim2.new(0, 36, 0, 208),
-                        Size = UDim2.new(0, 60, 0, 60),
+                        Size = UDim2.new(0, 48, 0, 48),
                         BorderSizePixel = 0,
-                        BackgroundColor3 = Color3.fromRGB(16, 16, 20)
-                    })
+                        BackgroundColor3 = Library.Theme["Accent"]
+                    }):AddToTheme({BackgroundColor3 = "Accent"})
     
                     Items["OpenAndClose"]:MakeDraggable()
                     
                     Library:Create("UICorner", {
                         Name = "\0",
                         Parent = Items["OpenAndClose"].Instance,
-                        CornerRadius = UDim.new(0, 5)
+                        CornerRadius = UDim.new(1, 0)
                     })
-                    
-                    Items["Logo"] = Library:Create("ImageLabel", {
+
+                    Library:Create("UIStroke", {
                         Name = "\0",
                         Parent = Items["OpenAndClose"].Instance,
-                        ImageColor3 = Color3.fromRGB(110, 112, 182),
-                        AnchorPoint = Vector2.new(0.5, 0.5),
-                        Image = Window.Logo,
-                        BackgroundTransparency = 1,
-                        Position = UDim2.new(0.5, 0, 0.5, 0),
-                        Size = UDim2.new(0, 30, 0, 30),
-                        BorderSizePixel = 0
-                    }):AddToTheme({ImageColor3 = 'Accent 4'})
+                        Color = Library.Theme["Accent 3"],
+                        Thickness = 1.5,
+                        Transparency = 0.5
+                    })
                     
                     Items["OpenAndClose"]:Connect("MouseButton1Down", function()
                         Window:SetOpen(not Window.IsOpen)
@@ -2130,6 +2134,41 @@ end)
 
                 for Index, Value in Library.OpenFrames do 
                     Value:SetOpen(false)
+                end
+
+                if Bool then
+                    if Window._FloatingButton then
+                        pcall(function() Window._FloatingButton:Destroy() end)
+                        Window._FloatingButton = nil
+                    end
+                else
+                    if not Window._FloatingButton then
+                        local btn = Instance.new("TextButton")
+                        btn.Name = "AeroReopen"
+                        btn.Text = "AERO"
+                        btn.Font = Enum.Font.GothamBold
+                        btn.TextSize = 14
+                        btn.TextColor3 = Color3.fromRGB(230, 230, 245)
+                        btn.BackgroundColor3 = Color3.fromRGB(18, 20, 26)
+                        btn.Size = UDim2.new(0, 60, 0, 60)
+                        btn.Position = UDim2.new(1, -75, 0, 15)
+                        btn.AnchorPoint = Vector2.new(0, 0)
+                        btn.BorderSizePixel = 0
+                        btn.ZIndex = 100000
+                        btn.AutoButtonColor = false
+                        btn.Parent = Library.Holder.Instance
+                        local corner = Instance.new("UICorner")
+                        corner.CornerRadius = UDim.new(1, 0)
+                        corner.Parent = btn
+                        local stroke = Instance.new("UIStroke")
+                        stroke.Color = Color3.fromRGB(50, 140, 255)
+                        stroke.Thickness = 2
+                        stroke.Parent = btn
+                        btn.MouseButton1Click:Connect(function()
+                            Window:SetOpen(true)
+                        end)
+                        Window._FloatingButton = btn
+                    end
                 end
             end
 
@@ -2173,7 +2212,7 @@ end)
                 end
             end)
 
-            Library:Connect(RunService.RenderStepped, function()
+            Library:Connect(RunService.Heartbeat, function()
                 if Window.IsOpen then
                     Library:GlobalUpdateOpenFrames()
                 end
