@@ -58,9 +58,6 @@ local Library = {
 
     OpenFrames = { },
 
-    _TransparencyCache = { },
-    _ActiveTweens = { },
-
     Holder = nil,
     UnusedHolder = nil,
 
@@ -342,43 +339,17 @@ local Library = {
             return 
         end
 
-        -- Cache original transparency on first encounter
-        if not Library._TransparencyCache[Object] then
-            Library._TransparencyCache[Object] = {}
-        end
-        if Library._TransparencyCache[Object][Property] == nil then
-            Library._TransparencyCache[Object][Property] = Object[Property]
-        end
-        local OriginalTransparency = Library._TransparencyCache[Object][Property]
-
-        -- Cancel any active tween on this object+property to prevent race conditions
-        if Library._ActiveTweens[Object] and Library._ActiveTweens[Object][Property] then
-            Library._ActiveTweens[Object][Property]:Cancel()
-        end
-
-        -- For fade-in: start fully transparent then tween to original
-        -- For fade-out: tween from current value to fully transparent (no jump)
-        if Visibility then
-            Object[Property] = 1
-        end
+        local OldTransparency = Object[Property]
+        Object[Property] = Visibility and 1 or OldTransparency
 
         local NewTween = Library:Tween({
-            [Property] = Visibility and OriginalTransparency or 1
+            [Property] = Visibility and OldTransparency or 1
         }, nil, Object)
 
-        -- Track active tween
-        if not Library._ActiveTweens[Object] then
-            Library._ActiveTweens[Object] = {}
-        end
-        Library._ActiveTweens[Object][Property] = NewTween
-
         Library:Connect(NewTween.Completed, function()
-            if Library._ActiveTweens[Object] then
-                Library._ActiveTweens[Object][Property] = nil
-            end
             if not Visibility then 
                 task.wait()
-                Object[Property] = OriginalTransparency
+                Object[Property] = OldTransparency
             end
         end)
 
