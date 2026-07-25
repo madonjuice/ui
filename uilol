@@ -73,7 +73,7 @@ function Library:New(config)
 	})
 
 	self.Main = Create("Frame", {
-		Size = UDim2.fromOffset(720, 500),
+		Size = UDim2.fromOffset(720, 560),
 		Position = UDim2.fromScale(0.5, 0.5),
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundColor3 = THEME.MainBg,
@@ -254,10 +254,14 @@ function Library:New(config)
 		Create("UIStroke", {Color = THEME.AccentSoft, Thickness = 1, Transparency = 0.35})
 	})
 
-	self.TabHolder = Create("Frame", {
+	self.TabHolder = Create("ScrollingFrame", {
 		Size = UDim2.new(1, 0, 1, 0),
 		BackgroundTransparency = 1,
 		ZIndex = 13,
+		ScrollBarThickness = 2,
+		ScrollBarImageColor3 = Color3.fromRGB(60, 60, 66),
+		CanvasSize = UDim2.new(0, 0, 0, 0),
+		ScrollingDirection = Enum.ScrollingDirection.Y,
 		Parent = self.Sidebar
 	}, {
 		Create("UIListLayout", {Padding = UDim.new(0, 5)}),
@@ -271,6 +275,15 @@ function Library:New(config)
 		ZIndex = 11,
 		Parent = self.Container
 	})
+
+	do
+		local tabListLayout = self.TabHolder:FindFirstChildOfClass("UIListLayout")
+		local function updateTabCanvas()
+			self.TabHolder.CanvasSize = UDim2.new(0, 0, 0, tabListLayout.AbsoluteContentSize.Y + 16)
+		end
+		tabListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateTabCanvas)
+		task.spawn(updateTabCanvas)
+	end
 
 	self._activeSliderUpdate = nil
 	self._activeSliderEnd = nil
